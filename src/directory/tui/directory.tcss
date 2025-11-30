@@ -111,7 +111,7 @@ Screen {
 /* Approval bar */
 #approval-panel {
     dock: bottom;
-    height: 5;
+    height: auto;
     background: $warning-darken-2;
     border-top: thick $warning;
     padding: 1;
@@ -138,26 +138,35 @@ Button {
 
 /* Approval buttons - flat style */
 #approval-panel Button {
-    height: 3;
+    height: auto;
     min-width: 12;
     border: none;
     padding: 0 2;
+    text-style: none;
 }
 
 #approve-yes {
     background: $success;
     color: $text;
+    tint: $success 0%;
 }
 
-#approve-yes:hover {
-    background: $success-lighten-1;
+#approve-yes:focus {
+    background: $success;
+    color: $text;
+    text-style: none;
+    tint: $success 0%;
 }
 
 #approve-no {
     background: $error;
     color: $text;
+    tint: $error 0%;
 }
 
-#approve-no:hover {
-    background: $error-lighten-1;
+#approve-no:focus {
+    background: $error;
+    color: $text;
+    text-style: none;
+    tint: $error 0%;
 }
