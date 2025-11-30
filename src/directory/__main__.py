@@ -28,6 +28,11 @@ MODES:
 CONTROLS:
     Tab             Switch between Query and Task modes
     Ctrl+C          Cancel current operation
+    Ctrl+Q          Quit Director.y
+
+COMMANDS (type in the input):
+    help, /help     Show help information
+    quit, exit      Exit Director.y
     /quit, /exit    Exit Director.y
 
 NOTES:

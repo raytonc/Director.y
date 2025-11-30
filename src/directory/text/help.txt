@@ -1,0 +1,32 @@
+[bold cyan]Director.y Help[/bold cyan]
+
+[bold]Commands:[/bold]
+  help, /help        Show this help message
+  quit, exit         Exit Director.y
+  /quit, /exit       Exit Director.y
+
+[bold]Keyboard Shortcuts:[/bold]
+  Tab                Switch between Query and Task modes
+  Ctrl+C             Cancel current operation
+  Ctrl+Q             Quit Director.y
+
+[bold]Query Mode[/bold] (Read-only):
+  Ask questions about your files
+  Examples:
+    • How many PDFs are in this folder?
+    • What's taking up the most space?
+    • Show me the largest files
+
+[bold]Task Mode[/bold] (Requires approval):
+  Perform file operations
+  Examples:
+    • Organize files by type
+    • Move all PDFs to Documents
+    • Delete files older than 30 days
+
+[bold]Notes:[/bold]
+  • All operations are sandboxed to current directory
+  • Task mode requires your explicit approval before changes
+  • Scripts are validated for safety before execution
+
+For more info: [link=https://github.com/raytonc/Director.y]https://github.com/raytonc/Director.y[/link]

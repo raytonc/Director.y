@@ -209,8 +209,14 @@ class DirectoryApp(App):
         user_input = event.value.strip()
 
         # Handle special commands
-        if user_input in ["/quit", "/exit"]:
+        if user_input.lower() in ["quit", "exit", "/quit", "/exit"]:
             self.exit()
+            return
+
+        # Handle help command
+        if user_input.lower() in ["help", "/help"]:
+            self.show_help()
+            event.input.value = ""
             return
 
         if not user_input:
@@ -328,6 +334,12 @@ class DirectoryApp(App):
         """
         # Reuse log_message which handles thread-safety
         self.log_message(f"[bold red]Error:[/bold red] {message}")
+
+    def show_help(self) -> None:
+        """Display help information."""
+        from ..text import load_text
+        help_text = load_text("help")
+        self.log_message(help_text)
 
     def show_script(self, script: str) -> None:
         """

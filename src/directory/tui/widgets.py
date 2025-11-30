@@ -88,7 +88,7 @@ class AppHeader(Container):
 
         # Bottom row: Keyboard shortcuts
         yield Static(
-            "Tab: Switch Mode | Ctrl+C: Cancel | Ctrl+Q: Quit",
+            "Tab: Switch Mode | Ctrl+C: Cancel | Ctrl+Q: Quit | Type 'help' for commands",
             id="shortcuts"
         )
 

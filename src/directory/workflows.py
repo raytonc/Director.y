@@ -127,20 +127,37 @@ async def task_flow(
             display_error(error)
             return
 
-        # Step 5: Generate execution script using Executor Agent
+        # Step 5: Generate execution script using Executor Agent (with retry on syntax errors)
         update_status("Generating execution plan...")
         display("[dim]AI is creating the execution script...[/dim]")
         executor_agent = ExecutorAgent()
         exec_response = await executor_agent.call(task, read_result.stdout, sandbox)
 
-        # Step 6: Validate execution script safety
+        # Step 6: Validate execution script syntax and retry if needed
+        from .execution import validate_script_syntax
+        max_retries = 2
+        for attempt in range(max_retries):
+            is_valid, syntax_error = validate_script_syntax(exec_response["script"])
+            if is_valid:
+                break
+
+            if attempt < max_retries - 1:
+                display(f"[dim]Script has syntax error, asking AI to fix (attempt {attempt + 2}/{max_retries})...[/dim]")
+                # Retry with syntax error feedback
+                error_feedback = f"\n\nPREVIOUS ATTEMPT HAD SYNTAX ERROR:\n{syntax_error}\n\nPlease fix the syntax and regenerate the script."
+                exec_response = await executor_agent.call(task, read_result.stdout + error_feedback, sandbox)
+            else:
+                display_error(f"Failed to generate valid script after {max_retries} attempts: {syntax_error}")
+                return
+
+        # Step 7: Validate execution script safety
         update_status("Validating execution...")
         display("[dim]Checking execution script safety...[/dim]")
         if classify_script(exec_response["script"], sandbox) == ScriptClassification.UNSAFE:
             display_error("Cannot perform that operation.")
             return
 
-        # Step 7: Request approval (async callback)
+        # Step 8: Request approval (async callback)
         update_status("Awaiting approval...")
         approved = await request_approval(exec_response["explanation"], exec_response["script"])
 
@@ -148,7 +165,7 @@ async def task_flow(
             display("Cancelled.")
             return
 
-        # Step 8: Execute the write script
+        # Step 9: Execute the write script
         update_status("Executing changes...")
         display("[dim]Running the execution script...[/dim]")
         write_result = execute_script(
@@ -161,13 +178,13 @@ async def task_flow(
             display_error(f"Execution failed: {write_result.stderr}")
             return
 
-        # Step 9: Check execution output size
+        # Step 10: Check execution output size
         ok, error = check_output_size(write_result.stdout)
         if not ok:
             display_error(error)
             return
 
-        # Step 10: Summarize results
+        # Step 11: Summarize results
         update_status("Summarizing results...")
         display("[dim]AI is summarizing the changes...[/dim]")
         summary_agent = SummaryAgent()

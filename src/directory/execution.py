@@ -202,6 +202,46 @@ def classify_script(script: str, sandbox: Path) -> ScriptClassification:
     return ScriptClassification.READ
 
 
+def validate_script_syntax(script: str) -> tuple[bool, str | None]:
+    """
+    Validate PowerShell script syntax without executing it.
+
+    Args:
+        script: PowerShell script to validate
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    try:
+        # Use PowerShell's parser to check syntax
+        # -Command with [scriptblock]::Create() validates without executing
+        result = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                f"[scriptblock]::Create(@'\n{script}\n'@)"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            encoding="utf-8",
+            errors="replace"
+        )
+
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() if result.stderr else "Syntax validation failed"
+            return False, f"PowerShell syntax error: {error_msg}"
+
+        return True, None
+
+    except subprocess.TimeoutExpired:
+        return False, "Syntax validation timed out"
+    except Exception as e:
+        return False, f"Syntax validation failed: {str(e)}"
+
+
 def execute_script(
     script: str,
     timeout: int = 60,
@@ -218,6 +258,15 @@ def execute_script(
     Returns:
         Execution result with success status, stdout, and stderr
     """
+    # Validate syntax before execution
+    is_valid, error = validate_script_syntax(script)
+    if not is_valid:
+        return ExecutionResult(
+            success=False,
+            stdout="",
+            stderr=error or "Script has invalid PowerShell syntax",
+        )
+
     try:
         # Build PowerShell command with better error handling
         # -NoProfile: Don't load user profile (faster startup)
