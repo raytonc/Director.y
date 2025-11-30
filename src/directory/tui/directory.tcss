@@ -1,0 +1,163 @@
+/* Textual CSS styling for Director.y */
+
+/* Overall app */
+Screen {
+    background: $surface;
+}
+
+/* Header - handled in widgets.py DEFAULT_CSS */
+#header-top {
+    layout: horizontal;
+    height: 2;
+}
+
+/* Main content area */
+#main-content {
+    height: 1fr;
+    border: solid $primary;
+    max-width: 120;
+    width: 100%;
+}
+
+#output {
+    background: $panel;
+    padding: 1;
+    scrollbar-gutter: stable;
+}
+
+/* Mode display (moved into main content) */
+#mode-display {
+    background: $panel;
+    padding: 0 1;
+    height: 1;
+    content-align: left middle;
+    color: $text;
+    border-bottom: solid $primary;
+}
+
+/* Make mode-display visually part of the output panel */
+#mode-display {
+    background: $panel;
+    padding: 0 1;
+    height: 1;
+    content-align: left middle;
+    color: $text;
+    /* no bottom border so it appears inside the same panel as #output */
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Reduce the top padding of the log so mode-display and output sit flush */
+#output {
+    background: $panel;
+    padding: 0 1 1 1;
+    scrollbar-gutter: stable;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+/* When any child of main-content has focus, make the mode line appear focused too */
+#main-content:focus-within #mode-display {
+    text-style: bold;
+    color: $accent;
+    /* add a subtle underline to match focused panel shading */
+    border-bottom: solid $primary-darken-2;
+}
+
+/* Status bar */
+#status-bar {
+    dock: bottom;
+    height: 1;
+    background: $panel;
+    layout: horizontal;
+    padding: 0 1;
+}
+
+#status-text {
+    width: 1fr;
+    content-align: left middle;
+}
+
+#progress {
+    width: auto;
+    margin-left: 2;
+}
+
+/* Input area */
+#input-area {
+    dock: bottom;
+    height: auto;
+    padding: 1;
+    background: $surface;
+}
+
+#input-area.hidden {
+    display: none;
+}
+
+#user-input {
+    height: 3;
+    border: solid $accent;
+}
+
+#user-input:focus {
+    border: solid $accent-lighten-2;
+}
+
+#user-input:disabled {
+    opacity: 0.5;
+}
+
+/* Approval bar */
+#approval-panel {
+    dock: bottom;
+    height: 5;
+    background: $warning-darken-2;
+    border-top: thick $warning;
+    padding: 1;
+    align: center middle;
+}
+
+#approval-panel.hidden {
+    display: none;
+}
+
+#approval-prompt {
+    width: auto;
+    margin-right: 2;
+    content-align: center middle;
+    color: $warning-lighten-3;
+    text-style: bold;
+}
+
+/* Buttons */
+Button {
+    margin: 0 1;
+    min-width: 12;
+}
+
+/* Approval buttons - flat style */
+#approval-panel Button {
+    height: 3;
+    min-width: 12;
+    border: none;
+    padding: 0 2;
+}
+
+#approve-yes {
+    background: $success;
+    color: $text;
+}
+
+#approve-yes:hover {
+    background: $success-lighten-1;
+}
+
+#approve-no {
+    background: $error;
+    color: $text;
+}
+
+#approve-no:hover {
+    background: $error-lighten-1;
+}
