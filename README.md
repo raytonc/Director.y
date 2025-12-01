@@ -229,7 +229,7 @@ pytest tests/ -v
 
 ## Requirements
 
--   **Windows** (PowerShell required)\
+-   **Windows** (PowerShell required)
 -   **Python 3.11+**
 -   **Anthropic API Key**
 -   Must be run from directories under `C:\Users\*`
