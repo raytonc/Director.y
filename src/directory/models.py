@@ -26,32 +26,3 @@ class ExecutionResult:
     success: bool
     stdout: str
     stderr: str
-
-
-@dataclass
-class QueryResponse:
-    """Response from Query Agent."""
-
-    script: str
-
-
-@dataclass
-class PlannerResponse:
-    """Response from Planner Agent."""
-
-    script: str
-
-
-@dataclass
-class ExecutorResponse:
-    """Response from Executor Agent."""
-
-    explanation: str
-    script: str
-
-
-@dataclass
-class SummaryResponse:
-    """Response from Summary Agent."""
-
-    summary: str
