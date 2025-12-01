@@ -9,12 +9,13 @@ from rich.syntax import Syntax
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal
 from textual.reactive import reactive
-from textual.widgets import Button, Input, LoadingIndicator, RichLog, Static
+from textual.widgets import Button, Input, LoadingIndicator, RichLog, Static, Tree
 from textual.worker import WorkerState, get_current_worker
 from textual.binding import Binding
 
 from ..models import Mode
 from ..workflows import query_flow, task_flow
+from .widgets import DirectoryTreeWidget
 # Note: AppHeader removed from main layout; keep widget file for now
 
 # Maximum input length (10KB)
@@ -59,30 +60,37 @@ class DirectoryApp(App):
 
     def compose(self) -> ComposeResult:
         """Build the UI layout."""
-        # Main output area (mode indicator + scrollable log)
-        with Container(id="main-content"):
-            # Mode display moved into main content (replaces top bar)
-            mode_icon = "🔍" if self.mode == Mode.QUERY else "⚡"
-            yield Static(f"{mode_icon} {self.mode.value} Mode", id="mode-display")
-            yield RichLog(id="output", highlight=True, markup=True, wrap=True)
+        # Horizontal layout: left panel (main/status/input) + directory tree sidebar
+        with Horizontal(id="content-wrapper"):
+            # Left panel: main content, status, and input (fixed width)
+            with Container(id="left-panel"):
+                # Main output area (mode indicator + scrollable log)
+                with Container(id="main-content"):
+                    # Mode display moved into main content (replaces top bar)
+                    mode_icon = "🔍" if self.mode == Mode.QUERY else "⚡"
+                    yield Static(f"{mode_icon} {self.mode.value} Mode", id="mode-display")
+                    yield RichLog(id="output", highlight=True, markup=True, wrap=True)
 
-        # Status bar with loading indicator
-        with Container(id="status-bar"):
-            yield Static("Ready", id="status-text")
-            yield LoadingIndicator(id="progress")
+                # Status bar with loading indicator
+                with Container(id="status-bar"):
+                    yield Static("Ready", id="status-text")
+                    yield LoadingIndicator(id="progress")
 
-        # Input area (visible when not in approval mode)
-        with Container(id="input-area"):
-            yield Input(
-                placeholder="Enter your question...",
-                id="user-input"
-            )
+                # Input area (visible when not in approval mode)
+                with Container(id="input-area"):
+                    yield Input(
+                        placeholder="Enter your question...",
+                        id="user-input"
+                    )
 
-        # Approval bar (visible only during approval)
-        with Horizontal(id="approval-panel", classes="hidden"):
-            yield Static("Approve changes?", id="approval-prompt")
-            yield Button("Approve (Y)", variant="success", id="approve-yes")
-            yield Button("Decline (N)", variant="error", id="approve-no")
+                # Approval bar (visible only during approval)
+                with Horizontal(id="approval-panel", classes="hidden"):
+                    yield Static("Approve changes?", id="approval-prompt")
+                    yield Button("Approve (Y)", variant="success", id="approve-yes")
+                    yield Button("Decline (N)", variant="error", id="approve-no")
+
+            # Directory tree sidebar (right side, flexible width)
+            yield DirectoryTreeWidget(self.sandbox)
 
     def on_mount(self) -> None:
         """Handle app mount event."""
@@ -275,6 +283,7 @@ class DirectoryApp(App):
         finally:
             self.workflow_running = False
             self.update_status("Ready")
+            self.refresh_directory_tree()
 
     def run_task_workflow(self, task: str) -> None:
         """Execute task workflow as a background worker."""
@@ -300,6 +309,7 @@ class DirectoryApp(App):
         finally:
             self.workflow_running = False
             self.update_status("Ready")
+            self.refresh_directory_tree()
 
     # UI update methods (thread-safe)
     def log_message(self, message: str) -> None:
@@ -366,6 +376,7 @@ class DirectoryApp(App):
                 syntax,
                 title="[cyan]Executing Script[/cyan]",
                 border_style="cyan",
+                width=83,  # 85 column panel - 2 for padding
             )
 
             log.write(panel)
@@ -403,6 +414,34 @@ class DirectoryApp(App):
                 self.call_from_thread(_update)
             except Exception:
                 _update()
+
+    def refresh_directory_tree(self) -> None:
+        """
+        Refresh the directory tree sidebar (thread-safe).
+
+        This method can be called from any thread and will safely
+        schedule the UI update on the main thread.
+        """
+        def _refresh():
+            try:
+                tree_widget = self.query_one("#directory-tree", DirectoryTreeWidget)
+                tree_widget.refresh_tree(self.sandbox)
+            except Exception:
+                # Silently fail if tree widget not found or refresh fails
+                # Don't block workflows if sidebar has issues
+                pass
+
+        try:
+            worker = get_current_worker()
+            if worker is not None:
+                self.call_from_thread(_refresh)
+            else:
+                _refresh()
+        except Exception:
+            try:
+                self.call_from_thread(_refresh)
+            except Exception:
+                _refresh()
 
     # Approval flow
     async def request_approval(self, explanation: str, script: str) -> bool:
@@ -446,6 +485,7 @@ class DirectoryApp(App):
             explanation_text,
             title="[yellow]Proposed Changes[/yellow]",
             border_style="yellow",
+            width=83,  # 85 column panel - 2 for padding
         ))
 
         # Display script with syntax highlighting (responsive width)
@@ -460,6 +500,7 @@ class DirectoryApp(App):
             syntax,
             title="[yellow]Script to Execute[/yellow]",
             border_style="yellow",
+            width=83,  # 85 column panel - 2 for padding
         ))
 
         log.write("\n[bold yellow]→ Approve these changes? (Y/N)[/bold yellow]\n")

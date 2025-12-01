@@ -11,12 +11,24 @@ Screen {
     height: 2;
 }
 
-/* Main content area */
+/* Content wrapper for horizontal layout (left panel + sidebar) */
+#content-wrapper {
+    height: 100%;
+    layout: horizontal;
+}
+
+/* Left panel: contains main content, status, and input (fixed width) */
+#left-panel {
+    width: 85;
+    height: 100%;
+    layout: vertical;
+}
+
+/* Main content area - now within left panel */
 #main-content {
+    width: 100%;
     height: 1fr;
     border: solid $primary;
-    max-width: 120;
-    width: 100%;
 }
 
 #output {
@@ -52,8 +64,10 @@ Screen {
     background: $panel;
     padding: 0 1 1 1;
     scrollbar-gutter: stable;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: auto;
+    width: 100%;
+    max-width: 85;
 }
 
 /* When any child of main-content has focus, make the mode line appear focused too */
@@ -66,7 +80,6 @@ Screen {
 
 /* Status bar */
 #status-bar {
-    dock: bottom;
     height: 1;
     background: $panel;
     layout: horizontal;
@@ -85,7 +98,6 @@ Screen {
 
 /* Input area */
 #input-area {
-    dock: bottom;
     height: auto;
     padding: 1;
     background: $surface;
@@ -110,7 +122,6 @@ Screen {
 
 /* Approval bar */
 #approval-panel {
-    dock: bottom;
     height: auto;
     background: $warning-darken-2;
     border-top: thick $warning;
@@ -169,4 +180,29 @@ Button {
     color: $text;
     text-style: none;
     tint: $error 0%;
+}
+
+/* Directory tree sidebar - flexible width */
+#directory-tree {
+    width: 1fr;
+    height: 100%;
+    border-left: solid $primary;
+    min-width: 30;
+}
+
+#tree-header {
+    height: 1;
+    background: $panel;
+    content-align: center middle;
+    text-style: bold;
+    color: $text;
+    border-bottom: solid $primary;
+}
+
+#dir-tree {
+    width: 100%;
+    height: 1fr;
+    scrollbar-gutter: stable;
+    background: $panel;
+    padding: 0 1;
 }
