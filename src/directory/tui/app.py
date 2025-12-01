@@ -95,8 +95,8 @@ class DirectoryApp(App):
         # Log welcome message
         self.log_message("[bold cyan]Welcome to Director.y![/bold cyan]")
         self.log_message(f"Working directory: {self.sandbox}")
-        self.log_message("Press Tab to switch between Query and Task modes.")
-        self.log_message("[dim]Tip: Click on the output area to scroll, or hold Shift while selecting to copy text.[/dim]\n")
+        self.log_message("Press Tab to switch modes.")
+        self.log_message("Hold Shift while selecting to copy text.\n")
 
     # Reactive watchers
     def watch_mode(self, new_mode: Mode) -> None:
@@ -153,7 +153,7 @@ class DirectoryApp(App):
 
     # Actions
     def action_switch_mode(self) -> None:
-        """Handle Tab key - switch between Query and Task modes."""
+        """Handle Tab key - switch mode and focus input."""
         if self.workflow_running or self.approval_pending:
             self.log_message(
                 "[yellow]Cannot switch modes during operation[/yellow]"
@@ -162,7 +162,9 @@ class DirectoryApp(App):
 
         # Toggle mode
         self.mode = Mode.TASK if self.mode == Mode.QUERY else Mode.QUERY
-        # Mode display is visible in the main content; no log output needed here
+
+        # Focus input bar
+        self.query_one("#user-input", Input).focus()
 
     def action_cancel(self) -> None:
         """Handle Ctrl+C - cancel current operation."""
