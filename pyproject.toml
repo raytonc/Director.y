@@ -24,12 +24,12 @@ classifiers = [
 dependencies = [
     "anthropic>=0.40.0",
     "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
     "prompt-toolkit>=3.0.0",
+    "questionary>=2.0.0",
     "textual>=0.90.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+    "tomli-w>=1.0.0",
 ]
-homepage = "https://github.com/raytonc/Director.y"
-repository = "https://github.com/raytonc/Director.y"
 
 [project.urls]
 "Bug Reports" = "https://github.com/raytonc/Director.y/issues"

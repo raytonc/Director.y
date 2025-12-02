@@ -1,5 +1,6 @@
 """CLI entry point for Director.y."""
 
+import asyncio
 import sys
 from pathlib import Path
 
@@ -15,8 +16,9 @@ USAGE:
     dy [OPTIONS]
 
 OPTIONS:
-    --help, -h      Show this help message
-    --version, -v   Show version information
+    --help, -h          Show this help message
+    --version, -v       Show version information
+    --configure, -c     Configure API keys and settings
 
 MODES:
     Query Mode  - Ask questions about your files (read-only)
@@ -71,6 +73,16 @@ def validate_sandbox() -> Path:
     return cwd
 
 
+def print_not_configured_message():
+    """Display not configured error message."""
+    print("\n" + "=" * 60)
+    print("  Directory.y is not configured")
+    print("=" * 60)
+    print("\nRun the following command to set up your API key:")
+    print("  dy --configure\n")
+    print("=" * 60 + "\n")
+
+
 def main():
     """Main entry point."""
     try:
@@ -83,10 +95,21 @@ def main():
             elif arg in ["--version", "-v"]:
                 show_version()
                 sys.exit(0)
+            elif arg in ["--configure", "-c"]:
+                # Run configuration wizard
+                from .configure import run_configure_wizard
+                asyncio.run(run_configure_wizard())
+                sys.exit(0)
             else:
                 print(f"Error: Unknown argument '{sys.argv[1]}'")
                 print("Run 'dy --help' for usage information")
                 sys.exit(1)
+
+        # Check configuration before proceeding
+        from .config import is_configured
+        if not is_configured():
+            print_not_configured_message()
+            sys.exit(1)
 
         # Validate sandbox first
         sandbox = validate_sandbox()

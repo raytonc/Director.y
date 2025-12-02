@@ -41,17 +41,19 @@ pip install -e .
 
 ### Configuration
 
-1.  Copy the example environment file:
+Run the interactive configuration wizard to set up your API key:
 
 ``` bash
-copy .env.example .env
+dy --configure
 ```
 
-2.  Edit `.env` and add your Anthropic API key:
+The wizard will guide you through:
+1. Selecting your AI provider (Anthropic Claude)
+2. Entering and validating your API key
+3. Choosing a model (claude-haiku-4-5, claude-sonnet-4-5, or claude-opus-4-5)
+4. Configuring timeouts and output limits
 
-``` env
-ANTHROPIC_API_KEY=your_actual_api_key_here
-```
+Your configuration will be saved to `%APPDATA%\directory\config.toml` (Windows) or `~/.config/directory/config.toml` (Linux/Mac).
 
 ------------------------------------------------------------------------
 
@@ -179,24 +181,36 @@ Examples:
 ### CLI Options
 
 ``` bash
-dy --help
-dy --version
+dy --help          # Show help message
+dy --version       # Show version information
+dy --configure     # Configure API keys and settings
 ```
 
 ------------------------------------------------------------------------
 
 ## Configuration Options
 
-``` env
-# Required
-ANTHROPIC_API_KEY=your_api_key_here
+Configuration is stored in TOML format (`%APPDATA%\directory\config.toml` on Windows).
 
-# Optional
-MODEL=claude-sonnet-4-20250514
-MAX_OUTPUT_SIZE=100000
-READ_TIMEOUT=60
-WRITE_TIMEOUT=300
+Use `dy --configure` to set up or modify your configuration interactively.
+
+Example configuration:
+
+``` toml
+[global]
+default_provider = "anthropic"
+max_output_size = 100000     # Maximum script output size (bytes)
+read_timeout = 60            # Timeout for read operations (seconds)
+write_timeout = 300          # Timeout for write operations (seconds)
+
+[providers.anthropic]
+enabled = true
+api_key = "sk-ant-api03-..."
+model = "claude-sonnet-4-5"  # Model alias (haiku-4-5, sonnet-4-5, opus-4-5)
+validated_at = "2025-12-02T14:30:00"
 ```
+
+**Note:** Model aliases (e.g., "claude-sonnet-4-5") automatically map to the latest model versions, ensuring your app stays up-to-date as models evolve.
 
 ------------------------------------------------------------------------
 
