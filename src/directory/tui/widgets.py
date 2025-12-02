@@ -273,8 +273,12 @@ $output | ConvertTo-Json -Depth 10 -Compress
         items = data.get("items", [])
 
         # PowerShell ConvertTo-Json returns a dict instead of list for single items
+        # But empty dict means no items
         if isinstance(items, dict):
-            items = [items]
+            if items:  # Only convert non-empty dicts to list
+                items = [items]
+            else:
+                items = []
 
         if not items:
             tree.root.add_leaf("(empty)")
