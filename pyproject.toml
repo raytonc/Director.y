@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "directory-agent"
-version = "1.0.0"
+version = "1.0.1"
 description = "AI-powered filesystem management via natural language"
 authors = [
     { name = "Director.y Contributors" }
@@ -48,4 +48,4 @@ dy = "directory.__main__:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-directory = ["py.typed"]
+directory = ["py.typed", "tui/*.tcss"]
