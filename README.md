@@ -1,37 +1,51 @@
 # Director.y
 
-**A natural-language TUI for safely managing your Windows filesystem
-with AI-generated PowerShell scripts.**
+**A natural-language TUI for safely managing your Windows filesystem with
+AI-generated PowerShell scripts.**
 
-Director.y is a terminal-based tool that lets you navigate, inspect, and
-manage your Windows filesystem using natural language. Describe a task
-or ask a question - Director.y will generate a safe PowerShell script,
-validate it, and execute it *only with your approval*.
+Director.y is a terminal-based tool that lets you navigate, inspect, and manage
+your Windows filesystem using natural language. Describe a task or ask a
+question - Director.y will generate a safe PowerShell script, validate it, and
+execute it _only with your approval_.
 
-------------------------------------------------------------------------
+---
 
 ## Features
 
--   **Natural Language Interface**: Manage files without memorizing
-    commands.
+-   **Natural Language Interface**: Manage files without memorizing commands.
 -   **Modern TUI**: Clean, responsive interface built with Textual.
--   **Two Modes**
-    -   *Query Mode*: Read-only questions about your filesystem.
-    -   *Task Mode*: File operations that require explicit approval.
 -   **Safety-First Execution**: Sandboxing, path validation, script
     classification, and multi-step validation.
--   **Automatic Retry**: AI automatically fixes PowerShell syntax
-    errors.
--   **Live Directory Tree**: Auto-refreshing, interactive view of your
-    working directory.
+-   **Automatic Retries**: AI automatically fixes PowerShell syntax errors.
+-   **Two Modes**
+    -   _Query Mode_: Read-only questions about your filesystem.
+    -   _Task Mode_: File operations that require explicit approval.
+-   **Live Directory Tree**: Auto-refreshing, interactive view of your working
+    directory.
+-   **Flexible LLM Integration**: Provider and model agnostic
 
-------------------------------------------------------------------------
+---
 
-## Quick Start
+## Installation
 
-### Developer Installation
+### From PyPI (Recommended)
 
-``` bash
+```bash
+pip install directory-agent
+```
+
+After installation, verify the `dy` command is available:
+
+```bash
+dy --version
+```
+
+**Note:** If the `dy` command isn't recognized, ensure Python's Scripts
+directory is in your PATH.
+
+### From Source (For Development)
+
+```bash
 git clone https://github.com/raytonc/Director.y.git
 cd Director.y
 
@@ -39,30 +53,33 @@ cd Director.y
 pip install -e .
 ```
 
-### Configuration
+---
+
+## Configuration
 
 Run the interactive configuration wizard to set up your API key:
 
-``` bash
+```bash
 dy --configure
 ```
 
 The wizard will guide you through:
-1. Selecting your AI provider (Anthropic Claude)
+
+1. Selecting your AI provider
 2. Entering and validating your API key
-3. Choosing a model (claude-haiku-4-5, claude-sonnet-4-5, or claude-opus-4-5)
+3. Choosing a model
 4. Configuring timeouts and output limits
 
-Your configuration will be saved to `%APPDATA%\directory\config.toml` (Windows) or `~/.config/directory/config.toml` (Linux/Mac).
+Your configuration will be saved to `%APPDATA%\directory\config.toml` (Windows).
 
-------------------------------------------------------------------------
+---
 
 ## Usage
 
-Director.y enforces a sandbox for safety and **must be run from a folder
-inside `C:\Users\<YourName>`**.
+Director.y enforces a sandbox for safety and **must be run from a folder inside
+`C:\Users\<YourName>`**.
 
-``` bash
+```bash
 # Navigate to a folder under your user directory
 cd C:\Users\YourName\Downloads
 
@@ -70,7 +87,7 @@ cd C:\Users\YourName\Downloads
 dy
 ```
 
-------------------------------------------------------------------------
+---
 
 ## How It Works
 
@@ -83,12 +100,13 @@ Ask questions like:
 -   "Which files were modified today?"
 
 **Flow:**
+
 1. AI generates a read-only PowerShell script
 2. The script is validated
 3. It runs safely in the sandbox
 4. Results are summarized in plain English
 
-------------------------------------------------------------------------
+---
 
 ### Task Mode (With Approval)
 
@@ -100,6 +118,7 @@ Examples:
 -   "Rename photos with dates"
 
 **Flow:**
+
 1. AI analyzes your request
 2. A read-only planning script is generated
 3. An execution script is produced
@@ -107,20 +126,18 @@ Examples:
 5. The script executes in the sandbox
 6. Results are summarized
 
-------------------------------------------------------------------------
+---
 
 ## Safety Features
 
 ### Multi-Layer Protection
 
-1.  **Sandboxing** -- Never operates outside the directory you run it
-    from
+1.  **Sandboxing** -- Never operates outside the directory you run it from
 2.  **Path Validation** -- All paths must stay within the sandbox
 3.  **Script Classification** -- Read-only, write, or unsafe
 4.  **Syntax Validation** -- PowerShell syntax checked before execution
 5.  **Manual Approval** -- Required for all write operations
-6.  **Recycle Bin Safety** -- Deletions are soft (moved to a temp
-    location)
+6.  **Recycle Bin Safety** -- Deletions are soft (moved to a temp location)
 7.  **Output Size Limits** -- Default: 100 KB
 8.  **Timeouts** -- 60s for read scripts, 300s for write scripts
 
@@ -132,7 +149,7 @@ Examples:
 -   Operations outside the sandbox
 -   Dangerous cmdlets (e.g., `Invoke-Expression`)
 
-------------------------------------------------------------------------
+---
 
 ## Architecture
 
@@ -162,7 +179,7 @@ Examples:
              → Executor Agent → Validation → Syntax Check → User Approval
              → Execute → Summary → User
 
-------------------------------------------------------------------------
+---
 
 ## Commands
 
@@ -180,57 +197,28 @@ Examples:
 
 ### CLI Options
 
-``` bash
+```bash
 dy --help          # Show help message
 dy --version       # Show version information
 dy --configure     # Configure API keys and settings
 ```
 
-------------------------------------------------------------------------
-
-## Configuration Options
-
-Configuration is stored in TOML format (`%APPDATA%\directory\config.toml` on Windows).
-
-Use `dy --configure` to set up or modify your configuration interactively.
-
-Example configuration:
-
-``` toml
-[global]
-default_provider = "anthropic"
-max_output_size = 100000     # Maximum script output size (bytes)
-read_timeout = 60            # Timeout for read operations (seconds)
-write_timeout = 300          # Timeout for write operations (seconds)
-
-[providers.anthropic]
-enabled = true
-api_key = "sk-ant-api03-..."
-model = "claude-sonnet-4-5"  # Model alias (haiku-4-5, sonnet-4-5, opus-4-5)
-validated_at = "2025-12-02T14:30:00"
-```
-
-**Note:** Model aliases (e.g., "claude-sonnet-4-5") automatically map to the latest model versions, ensuring your app stays up-to-date as models evolve.
-
-------------------------------------------------------------------------
+---
 
 ## Development
 
 ### Running Tests
 
-``` bash
+```bash
 pytest tests/ -v
 ```
 
 ### Project Structure Highlights
 
--   **Agents** -- Specialized AI components for planning and execution
--   **Prompt Text** -- Stored in `/text` for maintainability
--   **Execution Layer** -- Validates and runs PowerShell scripts in a
-    sandbox
+-   **Agents** -- Specialized AI agents for planning and execution
+-   **Execution Layer** -- Validates and runs PowerShell scripts safely
 -   **TUI Layer** -- Interactive interface built with Textual
--   **Workflow Engine** -- Manages multi-step AI interactions with retry
-    logic
+-   **Workflow Engine** -- Manages multi-step AI interactions with retry logic
 
 ### Adding New Features
 
@@ -239,17 +227,16 @@ pytest tests/ -v
 3.  Add workflow in `src/directory/workflows.py`
 4.  Add tests in `tests/`
 
-------------------------------------------------------------------------
+---
 
 ## Requirements
 
 -   **Windows** (PowerShell required)
 -   **Python 3.11+**
--   **Anthropic API Key**
 -   Must be run from directories under `C:\Users\*`
 
-------------------------------------------------------------------------
+---
 
-**Important:** Director.y executes PowerShell scripts. Always review
-proposed changes before approving. Multiple safety layers are in place,
-but *you* make the final decision.
+**Important:** Director.y executes PowerShell scripts. Always review proposed
+changes before approving. Multiple safety layers are in place, but _you_ make
+the final decision.
