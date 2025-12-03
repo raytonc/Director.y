@@ -52,7 +52,7 @@ async def validate_api_key(provider: str, api_key: str, max_retries: int = 3) ->
     Validate an API key for a given provider with retry logic.
 
     Args:
-        provider: The provider name ("anthropic", "openai", etc.)
+        provider: The provider name ("anthropic", etc.)
         api_key: The API key to validate
         max_retries: Maximum number of retry attempts
 
@@ -62,9 +62,6 @@ async def validate_api_key(provider: str, api_key: str, max_retries: int = 3) ->
     for attempt in range(max_retries):
         if provider == "anthropic":
             is_valid, error_msg = await validate_anthropic_key(api_key)
-        elif provider == "openai":
-            # Placeholder for OpenAI validation
-            return False, "OpenAI provider not yet supported"
         else:
             return False, f"Unknown provider: {provider}"
 

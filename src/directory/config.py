@@ -35,11 +35,6 @@ class AnthropicConfig(ProviderConfig):
     model: str = "claude-sonnet-4-5"
 
 
-class OpenAIConfig(ProviderConfig):
-    """OpenAI-specific configuration (future)."""
-    model: str = "gpt-4o"
-
-
 class GlobalConfig(BaseModel):
     """Global application settings."""
     default_provider: str = "anthropic"
@@ -129,8 +124,6 @@ def load_config() -> AppConfig:
             for provider_name, provider_data in data['providers'].items():
                 if provider_name == 'anthropic':
                     providers[provider_name] = AnthropicConfig(**provider_data)
-                elif provider_name == 'openai':
-                    providers[provider_name] = OpenAIConfig(**provider_data)
                 else:
                     providers[provider_name] = ProviderConfig(**provider_data)
 
