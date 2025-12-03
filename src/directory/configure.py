@@ -30,12 +30,12 @@ PROVIDER_METADATA = {
             "claude-opus-4-5",
         ],
     },
-    "openai": {
-        "name": "OpenAI (GPT)",
-        "supported": False,
-        "default_model": "gpt-4o",
-        "available_models": ["gpt-4o", "gpt-4o-mini"],
-    },
+    # "openai": {
+    #     "name": "OpenAI (GPT)",
+    #     "supported": False,
+    #     "default_model": "gpt-4o",
+    #     "available_models": ["gpt-4o", "gpt-4o-mini"],
+    # },
 }
 
 # Custom style for questionary
