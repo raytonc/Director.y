@@ -152,7 +152,6 @@ class DirectoryTreeWidget(Container):
         super().__init__(id="directory-tree")
         self.sandbox = sandbox
         self._refreshing = False
-        self._tree_script = self._build_tree_script()
 
     def compose(self) -> ComposeResult:
         """Build the widget layout."""
@@ -163,63 +162,151 @@ class DirectoryTreeWidget(Container):
         """Handle widget mount - initial tree load."""
         self.refresh_tree(self.sandbox)
 
-    def _build_tree_script(self) -> str:
-        """Build the PowerShell script for directory tree."""
-        return """
-$rootPath = Get-Location
-$maxDepth = 2
+    def _build_tree_script(self, target_path: str = None) -> str:
+        """
+        Build the PowerShell script for directory tree.
 
-function Get-DirectoryTree {
-    param(
-        [string]$Path,
-        [int]$CurrentDepth,
-        [int]$MaxDepth
-    )
+        Args:
+            target_path: Specific path to load children for (if None, uses current directory)
 
-    if ($CurrentDepth -gt $MaxDepth) {
-        return $null
-    }
+        Returns:
+            PowerShell script as string
+        """
+        if target_path:
+            return f"""
+$targetPath = "{target_path}"
 
-    try {
-        $items = Get-ChildItem -Path $Path -Force -ErrorAction SilentlyContinue |
-                 Sort-Object { -not $_.PSIsContainer }, Name
+try {{
+    $items = Get-ChildItem -Path $targetPath -Force -ErrorAction SilentlyContinue |
+             Sort-Object {{ -not $_.PSIsContainer }}, Name
 
-        $result = @()
+    $result = @()
 
-        foreach ($item in $items) {
-            $obj = @{
-                name = $item.Name
-                path = $item.FullName
-                is_dir = $item.PSIsContainer
-                children = @()
-            }
+    foreach ($item in $items) {{
+        $obj = @{{
+            name = $item.Name
+            path = $item.FullName
+            is_dir = $item.PSIsContainer
+        }}
 
-            if ($item.PSIsContainer -and $CurrentDepth -lt $MaxDepth) {
-                $children = Get-DirectoryTree -Path $item.FullName `
-                    -CurrentDepth ($CurrentDepth + 1) -MaxDepth $MaxDepth
-                if ($children) {
-                    $obj.children = $children
-                }
-            }
+        $result += $obj
+    }}
 
-            $result += $obj
+    $output = @{{
+        root = $targetPath
+        items = $result
+    }}
+
+    $output | ConvertTo-Json -Depth 3 -Compress
+}}
+catch {{
+    $output = @{{
+        root = $targetPath
+        items = @()
+    }}
+    $output | ConvertTo-Json -Depth 3 -Compress
+}}
+"""
+        else:
+            return """
+$targetPath = Get-Location
+
+try {
+    $items = Get-ChildItem -Path $targetPath -Force -ErrorAction SilentlyContinue |
+             Sort-Object { -not $_.PSIsContainer }, Name
+
+    $result = @()
+
+    foreach ($item in $items) {
+        $obj = @{
+            name = $item.Name
+            path = $item.FullName
+            is_dir = $item.PSIsContainer
         }
 
-        return $result
+        $result += $obj
     }
-    catch {
-        return @()
+
+    $output = @{
+        root = $targetPath.Path
+        items = $result
     }
-}
 
-$tree = Get-DirectoryTree -Path $rootPath -CurrentDepth 0 -MaxDepth $maxDepth
-$output = @{
-    root = $rootPath.Path
-    items = $tree
+    $output | ConvertTo-Json -Depth 3 -Compress
 }
-
-$output | ConvertTo-Json -Depth 10 -Compress
+catch {
+    $output = @{
+        root = $targetPath.Path
+        items = @()
+    }
+    $output | ConvertTo-Json -Depth 3 -Compress
+}
 """
+
+    def _get_expanded_paths(self, tree: Tree) -> set[Path]:
+        """
+        Get all currently expanded directory paths.
+
+        Args:
+            tree: Tree widget
+
+        Returns:
+            Set of expanded directory paths
+        """
+        expanded_paths = set()
+
+        def collect_expanded(node):
+            """Recursively collect expanded node paths."""
+            if node.data and isinstance(node.data, dict):
+                if node.is_expanded and node.data.get("is_dir"):
+                    expanded_paths.add(node.data["path"])
+
+            for child in node.children:
+                collect_expanded(child)
+
+        collect_expanded(tree.root)
+        return expanded_paths
+
+    def _restore_expanded_state(self, tree: Tree, expanded_paths: set[Path]) -> None:
+        """
+        Restore previously expanded nodes.
+
+        Args:
+            tree: Tree widget
+            expanded_paths: Set of paths that should be expanded
+        """
+        def restore_node(node):
+            """Recursively restore expanded state."""
+            if node.data and isinstance(node.data, dict):
+                if node.data.get("path") in expanded_paths:
+                    node.expand()
+
+            for child in node.children:
+                restore_node(child)
+
+        restore_node(tree.root)
+
+    def _reload_expanded_paths(self, tree: Tree, expanded_paths: set[Path]) -> None:
+        """
+        Reload children for previously expanded paths.
+
+        Args:
+            tree: Tree widget
+            expanded_paths: Set of paths that were expanded
+        """
+        def reload_node(node):
+            """Recursively reload expanded nodes."""
+            if node.data and isinstance(node.data, dict):
+                node_path = node.data.get("path")
+                if node_path in expanded_paths and node.data.get("is_dir"):
+                    # Load children for this node
+                    self._load_children(node)
+                    node.expand()
+
+            for child in node.children:
+                reload_node(child)
+
+        reload_node(tree.root)
 
     def refresh_tree(self, sandbox: Path) -> None:
         """
@@ -238,8 +325,12 @@ $output | ConvertTo-Json -Depth 10 -Compress
 
             tree = self.query_one("#dir-tree", Tree)
 
-            # Execute PowerShell script to get directory structure
-            result = execute_script(self._tree_script, timeout=10, cwd=sandbox)
+            # Preserve expanded paths before refresh
+            expanded_paths = self._get_expanded_paths(tree)
+
+            # Execute PowerShell script to get root directory structure
+            script = self._build_tree_script(str(sandbox))
+            result = execute_script(script, timeout=10, cwd=sandbox)
 
             if not result.success:
                 self._show_error(tree, f"Failed: {result.stderr[:50]}")
@@ -254,6 +345,9 @@ $output | ConvertTo-Json -Depth 10 -Compress
 
             # Build tree structure
             self._build_tree(tree, tree_data)
+
+            # Restore expanded state by loading children for expanded paths
+            self._reload_expanded_paths(tree, expanded_paths)
         finally:
             self._refreshing = False
 
@@ -288,7 +382,7 @@ $output | ConvertTo-Json -Depth 10 -Compress
 
     def _add_nodes(self, parent_node, items: list, depth: int) -> None:
         """
-        Recursively add nodes to tree.
+        Add nodes to tree without pre-loading children.
 
         Args:
             parent_node: Parent tree node
@@ -308,22 +402,90 @@ $output | ConvertTo-Json -Depth 10 -Compress
             node_data = {
                 "path": Path(item["path"]),
                 "is_dir": item["is_dir"],
-                "depth": depth
+                "depth": depth,
+                "children_loaded": False
             }
 
-            # Add directory with children or leaf
-            children = item.get("children", [])
-
-            # PowerShell ConvertTo-Json returns a dict instead of list for single items
-            if isinstance(children, dict):
-                children = [children]
-
-            if item["is_dir"] and children:
-                node = parent_node.add(label, data=node_data)
-                # Don't auto-expand - start collapsed
-                self._add_nodes(node, children, depth + 1)
+            # Add directory as expandable node (but don't load children yet)
+            # Or add file as leaf
+            if item["is_dir"]:
+                node = parent_node.add(label, data=node_data, allow_expand=True)
+                # Add placeholder to make it expandable
+                node.add_leaf("Loading...")
             else:
                 parent_node.add_leaf(label, data=node_data)
+
+    def _load_children(self, node) -> None:
+        """
+        Load children for a directory node.
+
+        Args:
+            node: Tree node to load children for
+        """
+        if not node.data or not node.data.get("is_dir"):
+            return
+
+        # Skip if already loaded
+        if node.data.get("children_loaded"):
+            return
+
+        from ..execution import execute_script
+
+        # Get path for this node
+        node_path = node.data["path"]
+
+        # Execute PowerShell script to get children
+        script = self._build_tree_script(str(node_path))
+        result = execute_script(script, timeout=5, cwd=self.sandbox)
+
+        if not result.success:
+            # Remove placeholder and show error
+            node.remove_children()
+            node.add_leaf("(error loading)")
+            return
+
+        # Parse JSON output
+        try:
+            tree_data = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            node.remove_children()
+            node.add_leaf("(error parsing)")
+            return
+
+        # Remove placeholder
+        node.remove_children()
+
+        items = tree_data.get("items", [])
+
+        # PowerShell ConvertTo-Json returns a dict instead of list for single items
+        if isinstance(items, dict):
+            if items:
+                items = [items]
+            else:
+                items = []
+
+        if not items:
+            node.add_leaf("(empty)")
+        else:
+            # Add children nodes
+            self._add_nodes(node, items, node.data["depth"] + 1)
+
+        # Mark as loaded
+        node.data["children_loaded"] = True
+
+    def on_tree_node_expanded(self, event: Tree.NodeExpanded) -> None:
+        """
+        Handle tree node expansion - lazy load children.
+
+        Args:
+            event: Node expanded event
+        """
+        node = event.node
+
+        # Load children if not already loaded
+        if node.data and node.data.get("is_dir"):
+            if not node.data.get("children_loaded"):
+                self._load_children(node)
 
     def _show_error(self, tree: Tree, message: str) -> None:
         """
