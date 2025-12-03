@@ -15,8 +15,7 @@ execute it _only with your approval_.
 -   **Natural Language Interface**: Manage files without memorizing commands.
 -   **Modern TUI**: Clean, responsive interface built with Textual.
 -   **Safety-First Execution**: Sandboxing, path validation, script
-    classification, and multi-step validation.
--   **Automatic Retries**: AI automatically fixes PowerShell syntax errors.
+    classification, and automatic syntax validation with retry for all scripts.
 -   **Two Modes**
     -   _Query Mode_: Read-only questions about your filesystem.
     -   _Task Mode_: File operations that require explicit approval.
@@ -96,15 +95,15 @@ dy
 Ask questions like:
 
 -   "What's taking up the most space?"
--   "How many PDFs are here?"
 -   "Which files were modified today?"
 
 **Flow:**
 
 1. AI generates a read-only PowerShell script
-2. The script is validated
-3. It runs safely in the sandbox
-4. Results are summarized in plain English
+2. Syntax validation (with automatic retry if errors are found)
+3. Script classification and safety checks
+4. Execution in the sandbox
+5. Results are summarized in plain English
 
 ---
 
@@ -119,12 +118,15 @@ Examples:
 
 **Flow:**
 
-1. AI analyzes your request
-2. A read-only planning script is generated
-3. An execution script is produced
-4. **You review and approve all changes**
-5. The script executes in the sandbox
-6. Results are summarized
+1. AI generates a planning script to analyze your request
+2. Syntax validation with retry (planning script)
+3. Planning script executes (read-only)
+4. AI generates an execution script based on the analysis
+5. Syntax validation with retry (execution script)
+6. Safety classification check
+7. **You review and approve all changes**
+8. The script executes in the sandbox
+9. Results are summarized
 
 ---
 
@@ -135,7 +137,8 @@ Examples:
 1.  **Sandboxing** -- Never operates outside the directory you run it from
 2.  **Path Validation** -- All paths must stay within the sandbox
 3.  **Script Classification** -- Read-only, write, or unsafe
-4.  **Syntax Validation** -- PowerShell syntax checked before execution
+4.  **Syntax Validation with Retry** -- All scripts validated before execution;
+    AI automatically fixes syntax errors
 5.  **Manual Approval** -- Required for all write operations
 6.  **Recycle Bin Safety** -- Deletions are soft (moved to a temp location)
 7.  **Output Size Limits** -- Default: 100 KB
@@ -171,13 +174,11 @@ Examples:
 
 **Query Flow**
 
-    User Question → Query Agent → Validation → Execution → Summary → User
+    User Question → Query Agent → Validation → Execution → Summary
 
 **Task Flow**
 
-    User Task → Planner Agent → Planning Script → Execution Plan
-             → Executor Agent → Validation → Syntax Check → User Approval
-             → Execute → Summary → User
+    User Task → Planner Agent → Validation → Execution → Executor Agent → Validation → User Approval → Execution → Summary
 
 ---
 
@@ -233,7 +234,6 @@ pytest tests/ -v
 
 -   **Windows** (PowerShell required)
 -   **Python 3.11+**
--   Must be run from directories under `C:\Users\*`
 
 ---
 

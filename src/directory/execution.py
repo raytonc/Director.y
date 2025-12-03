@@ -251,22 +251,13 @@ def execute_script(
     Execute a PowerShell script.
 
     Args:
-        script: PowerShell script to execute
+        script: PowerShell script to execute (should be pre-validated by caller)
         timeout: Timeout in seconds
         cwd: Working directory for script execution (defaults to current directory)
 
     Returns:
         Execution result with success status, stdout, and stderr
     """
-    # Validate syntax before execution
-    is_valid, error = validate_script_syntax(script)
-    if not is_valid:
-        return ExecutionResult(
-            success=False,
-            stdout="",
-            stderr=error or "Script has invalid PowerShell syntax",
-        )
-
     try:
         # Build PowerShell command with better error handling
         # -NoProfile: Don't load user profile (faster startup)
